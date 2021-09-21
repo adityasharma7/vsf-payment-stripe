@@ -1,5 +1,4 @@
 <template>
-
   <div class="mb15 mt20 vsf-stripe-container">
     <h4 class="mt0">
       <label for="vsf-stripe-card-element">
@@ -9,10 +8,9 @@
     <div class="bg-cl-secondary px20 py20">
       <form action="" id="payment-form">
         <div class="form-row">
-
           <div id="vsf-stripe-card-element">
             &nbsp;
-            <!-- A Stripe Element will be inserted here. -->
+          <!-- A Stripe Element will be inserted here. -->
           </div>
 
           <!-- Used to display Element errors. -->
@@ -23,7 +21,6 @@
       </form>
     </div>
   </div>
-
 </template>
 
 <script>
@@ -45,6 +42,7 @@ export default {
   computed: {
     ...mapGetters({
       paymentDetails: 'checkout/getPaymentDetails',
+      cartId: 'cart/getCartToken'
     }),
     ...mapState({
       stripeConfig: state => state.config.stripe
@@ -52,7 +50,7 @@ export default {
   },
   beforeMount () {
     EventBus.$on('order-after-placed', this.onAfterPlaceOrder)
-    // Added Stripe specific event needed for Not Naked/Capybara theme where there is a separate confirmation page after payment 
+    // Added Stripe specific event needed for Not Naked/Capybara theme where there is a separate confirmation page after payment
     // Ready to place order, handle anything we need to, generating, validating stripe requests & tokens ect.
     EventBus.$on('checkout-after-stripe-payment', this.onBeforePlaceOrder)
   },
@@ -116,7 +114,7 @@ export default {
       let options = this.stripeConfig.hasOwnProperty('options') ? this.stripeConfig.options : {};
       let cardOptions = {};
       cardOptions.style = style;
-      Object.keys(options).forEach(function (option) {
+      Object.keys(options).forEach((option) => {
         cardOptions[option] = options[option];
       });
       // Create an instance of the card Element.
@@ -147,11 +145,16 @@ export default {
       EventBus.$emit('notification-progress-start', [i18n.t('Placing Order'), '...'].join(''))
 
       var data = {
-        billing_details: {}
+        billing_details: {},
+        metadata: {
+          'orderId': this.cartId // Storing order reference in Stripe https://stripe.com/docs/api/payment_methods/object#payment_method_object-metadata
+        }
       };
 
       // TODO Check empty case
-      data["billing_details"]["name"] = this.paymentDetails.firstName + " " + this.paymentDetails.lastName;
+      data['billing_details']['name'] = this.paymentDetails.firstName + ' ' + this.paymentDetails.lastName;
+
+      console.log('data', data);
 
       // Create payment method with Stripe
       this.stripe.instance.createPaymentMethod('card', this.stripe.card, data).then((result) => {
